@@ -37,6 +37,7 @@ public class DataInitializer implements ApplicationListener<ApplicationReadyEven
                 .email("super_admin@email.com")
                 .password(passwordEncoder.encode("12345678"))
                 .role(Role.SUPER_ADMIN)
+                .isVerified(true)
                 .build();
 
         userRepository.save(superAdmin);
@@ -52,6 +53,7 @@ public class DataInitializer implements ApplicationListener<ApplicationReadyEven
                 .password(passwordEncoder.encode("12345678"))
                 .role(Role.ADMIN)
                 .permissions(Set.of(adminDefaultPermissions))
+                .isVerified(true)
                 .build();
 
         userRepository.save(admin);

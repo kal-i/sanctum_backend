@@ -7,6 +7,9 @@ import lombok.Data;
 
 @Data
 public class CreateUserRequest {
+    @NotBlank(message = "Username cannot be empty or null")
+    private String username;
+
     @Email
     @NotBlank(message = "Email cannot be empty or null")
     private String email;
