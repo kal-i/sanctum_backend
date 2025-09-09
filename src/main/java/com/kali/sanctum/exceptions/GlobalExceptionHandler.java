@@ -1,5 +1,6 @@
 package com.kali.sanctum.exceptions;
 
+import com.kali.sanctum.dto.response.ApiResponse;
 import io.jsonwebtoken.ExpiredJwtException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -40,8 +41,10 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(CustomAuthException.class)
-    public ResponseEntity<String> handleCustomAuthException(CustomAuthException e) {
-        return new ResponseEntity<>(e.getMessage(), UNAUTHORIZED);
+    public ResponseEntity<ApiResponse> handleCustomAuthException(CustomAuthException e) {
+        HttpStatus status = e.getMessage().contains("verify your account") ? FORBIDDEN : UNAUTHORIZED;
+
+        return ResponseEntity.status(status).body(new ApiResponse(e.getMessage(), null));
     }
 
     @ExceptionHandler(AccessDeniedException.class)

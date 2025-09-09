@@ -1,9 +1,9 @@
 package com.kali.sanctum.security.jwt;
 
+import com.kali.sanctum.enums.Token;
 import com.kali.sanctum.security.user.CustomUserDetails;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -14,16 +14,20 @@ import javax.crypto.SecretKey;
 import java.util.Base64;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 @Component
 public class JwtUtils {
     @Value("${auth.token.jwtSecret}")
     private String jwtSecret;
 
-    @Value("${auth.token.expirationInMils}")
-    private int expirationTime;
+    @Value("${auth.token.accessExpirationInMils}")
+    private int accessExpirationTime;
 
-    public String generateTokenForUser(Authentication authentication) {
+    @Value("${auth.token.refreshExpirationInMils}")
+    private int refreshExpirationTime;
+
+    public String generateTokenForUser(Authentication authentication, Token token, Date absoluteExpiry) {
         CustomUserDetails userPrincipal = (CustomUserDetails) authentication.getPrincipal();
 
         List<String> roles = userPrincipal.getAuthorities()
@@ -31,14 +35,25 @@ public class JwtUtils {
                 .map(GrantedAuthority::getAuthority)
                 .toList();
 
-        return Jwts.builder()
+        int expirationTime = token == Token.ACCESS ? accessExpirationTime : refreshExpirationTime;
+
+        String jti = UUID.randomUUID().toString();
+
+        JwtBuilder jwtBuilder = Jwts.builder()
+                .id(jti)
                 .subject(userPrincipal.getEmail())
                 .claim("id", userPrincipal.getId())
                 .claim("roles", roles)
+                .claim("tokenType", token.name())
                 .issuedAt(new Date())
-                .expiration(new Date((new Date()).getTime() + expirationTime))
-                .signWith(key(), Jwts.SIG.HS256)
-                .compact();
+                .expiration(new Date(System.currentTimeMillis() + expirationTime))
+                .signWith(key(), Jwts.SIG.HS256);
+
+        if (token == Token.REFRESH) {
+            jwtBuilder.claim("absoluteExpiry", absoluteExpiry);
+        }
+
+        return jwtBuilder.compact();
     }
 
     private SecretKey key() {
@@ -65,5 +80,13 @@ public class JwtUtils {
         } catch (ExpiredJwtException | UnsupportedJwtException e) {
             throw new JwtException(e.getMessage());
         }
+    }
+
+    public Claims getAllClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(key())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 }
