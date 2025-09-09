@@ -24,12 +24,18 @@ public class CustomUserDetails implements UserDetails {
         return user.getEmail();
     }
 
+    public String getProfileImageUrl() { return user.getProfileImageUrl(); }
+
     public Set<Permission> getPermissions() {
         return user.getPermissions();
     }
 
     public Role getRole() {
         return user.getRole();
+    }
+
+    public boolean isVerified() {
+        return user.isVerified();
     }
 
     @Override
@@ -55,7 +61,7 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public String getUsername() {
-        return user.getEmail();
+        return user.getUsername();
     }
 
     @Override
