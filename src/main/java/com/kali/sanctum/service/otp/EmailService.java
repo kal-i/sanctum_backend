@@ -91,7 +91,7 @@ public class EmailService implements IEmailService {
         Random random = new Random();
         StringBuilder sb = new StringBuilder();
 
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 4; i++) {
             sb.append(random.nextInt(10));
         }
 
