@@ -1,13 +1,11 @@
 package com.kali.sanctum.controller;
 
-import com.kali.sanctum.dto.request.CreateUserRequest;
-import com.kali.sanctum.dto.request.SendOtpRequest;
-import com.kali.sanctum.dto.request.LoginRequest;
-import com.kali.sanctum.dto.request.VerifyOtpRequest;
+import com.kali.sanctum.dto.request.*;
 import com.kali.sanctum.dto.response.ApiResponse;
 import com.kali.sanctum.dto.response.JwtResponse;
 import com.kali.sanctum.dto.response.UserDto;
 import com.kali.sanctum.exceptions.AlreadyExistsException;
+import com.kali.sanctum.exceptions.CustomAuthException;
 import com.kali.sanctum.exceptions.OtpVerificationException;
 import com.kali.sanctum.exceptions.ResourceNotFoundException;
 import com.kali.sanctum.model.Otp;
@@ -70,5 +68,11 @@ public class AuthController {
         } catch (OtpVerificationException e) {
             return ResponseEntity.status(BAD_REQUEST).body(new ApiResponse(e.getMessage(), null));
         }
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse> refresh(@RequestBody RefreshTokenRequest request) {
+        JwtResponse jwtResponse = authService.refresh(request);
+        return ResponseEntity.ok(new ApiResponse("Token refreshed", jwtResponse));
     }
 }
