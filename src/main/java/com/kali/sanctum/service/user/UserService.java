@@ -62,6 +62,7 @@ public class UserService implements IUserService {
                 .filter(user -> !userRepository.existsByEmail(user.getEmail()))
                 .map(req -> {
                     User user = User.builder()
+                            .username(req.getUsername())
                             .email(req.getEmail())
                             .password(passwordEncoder.encode(req.getPassword()))
                             .role(Role.USER)
