@@ -30,7 +30,7 @@ public class EmailService implements IEmailService {
         * Check if email is registered in the db
         * To avoid sending unnecessary OTP
         * */
-        User user = Optional.ofNullable(userRepository.findByEmail(request.getEmail()))
+        User user = Optional.ofNullable(userRepository.findByEmail(request.email()))
                 .orElseThrow(() -> new ResourceNotFoundException("User email is not registered"));
 
         // Check if there is an existing OTP
@@ -48,14 +48,14 @@ public class EmailService implements IEmailService {
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(user.getEmail().trim().toLowerCase());
-        message.setSubject(request.getPurpose().name());
+        message.setSubject(request.purpose().name());
         message.setText("Your OTP code is: " + otpCode);
         javaMailSender.send(message);
 
         Otp otp = Otp.builder()
                 .code(otpCode)
                 .expiration(LocalDateTime.now().plusMinutes(5))
-                .otpPurpose(request.getPurpose())
+                .otpPurpose(request.purpose())
                 .user(user)
                 .build();
 
@@ -65,7 +65,7 @@ public class EmailService implements IEmailService {
     @Transactional
     @Override
     public void verifyOtp(VerifyOtpRequest verifyOtpRequest) {
-        User user = Optional.ofNullable(userRepository.findByEmail(verifyOtpRequest.getEmail()))
+        User user = Optional.ofNullable(userRepository.findByEmail(verifyOtpRequest.email()))
                 .orElseThrow(() -> new ResourceNotFoundException("User email is not registered"));
 
         Otp otp = otpRepository.findByUserEmail(user.getEmail());
@@ -77,7 +77,7 @@ public class EmailService implements IEmailService {
             throw new OtpVerificationException("Otp code expired");
         }
 
-        if (!otp.getCode().equals(verifyOtpRequest.getOtpCode())) {
+        if (!otp.getCode().equals(verifyOtpRequest.otpCode())) {
             throw new OtpVerificationException("Invalid otp code");
         }
 

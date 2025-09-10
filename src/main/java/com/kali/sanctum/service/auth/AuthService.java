@@ -48,7 +48,7 @@ public class AuthService implements IAuthService {
         try {
             Authentication authentication = authenticationManager
                     .authenticate(new UsernamePasswordAuthenticationToken(
-                            request.getEmail(), request.getPassword()
+                            request.email(), request.password()
                     ));
 
             CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
@@ -81,7 +81,7 @@ public class AuthService implements IAuthService {
                     null,
                     AuditLogType.FAILED_LOGIN_ATTEMPT,
                     null,
-                    "Failed login attempt for email: " + request.getEmail()
+                    "Failed login attempt for email: " + request.email()
             );
 
             throw new CustomAuthException("Invalid email or password");
@@ -102,7 +102,7 @@ public class AuthService implements IAuthService {
 
     @Override
     public JwtResponse refresh(RefreshTokenRequest request) {
-        String refreshToken = request.getRefreshToken();
+        String refreshToken = request.refreshToken();
 
         if (!jwtUtils.validateToken(refreshToken)) {
             throw new CustomAuthException("Invalid or expired refresh token");

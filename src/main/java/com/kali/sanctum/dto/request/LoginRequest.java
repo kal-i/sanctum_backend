@@ -2,13 +2,13 @@ package com.kali.sanctum.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
+import lombok.Builder;
 
-@Data
-public class LoginRequest {
-    @Email
-    @NotBlank
-    private String email;
-    @NotBlank
-    private String password;
-}
+@Builder
+public record LoginRequest(
+        @Email
+        @NotBlank
+        String email,
+        @NotBlank
+        String password
+) {}
