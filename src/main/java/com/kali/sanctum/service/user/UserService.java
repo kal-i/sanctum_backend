@@ -59,12 +59,12 @@ public class UserService implements IUserService {
     @Override
     public User createUser(CreateUserRequest createUserRequest) {
         return Optional.of(createUserRequest)
-                .filter(user -> !userRepository.existsByEmail(user.getEmail()))
+                .filter(user -> !userRepository.existsByEmail(user.email()))
                 .map(req -> {
                     User user = User.builder()
-                            .username(req.getUsername())
-                            .email(req.getEmail())
-                            .password(passwordEncoder.encode(req.getPassword()))
+                            .username(req.username())
+                            .email(req.email())
+                            .password(passwordEncoder.encode(req.password()))
                             .role(Role.USER)
                             .build();
 
@@ -78,14 +78,14 @@ public class UserService implements IUserService {
                     );
 
                     return savedUser;
-                }).orElseThrow(() -> new AlreadyExistsException(createUserRequest.getEmail() + " already exists"));
+                }).orElseThrow(() -> new AlreadyExistsException(createUserRequest.email() + " already exists"));
     }
 
     @Override
     public User updateUserProfile(Long id, UpdateUserRequest updateUserRequest) {
         return userRepository.findById(id)
                 .map(existingUser -> {
-                    existingUser.setUsername(updateUserRequest.getUsername());
+                    existingUser.setUsername(updateUserRequest.username());
 
                     User updatedUser = userRepository.save(existingUser);
 

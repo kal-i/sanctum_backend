@@ -1,11 +1,9 @@
 package com.kali.sanctum.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Builder;
 
-@AllArgsConstructor
-@Data
-public class ApiResponse {
-    private String message;
-    private Object data;
-}
+@Builder
+public record ApiResponse(
+        String message,
+        Object data
+) {}

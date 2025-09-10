@@ -1,14 +1,10 @@
 package com.kali.sanctum.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Builder;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class JwtResponse {
-    private UserDto userDto;
-    private String accessToken;
-    private String refreshToken;
-}
+@Builder
+public record JwtResponse(
+        UserDto userDto,
+        String accessToken,
+        String refreshToken
+) {}

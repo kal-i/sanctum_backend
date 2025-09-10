@@ -1,8 +1,10 @@
 package com.kali.sanctum.dto.request;
 
-import lombok.Data;
+import jakarta.validation.constraints.NotBlank;
+import lombok.Builder;
 
-@Data
-public class RefreshTokenRequest {
-    private String refreshToken;
-}
+@Builder
+public record RefreshTokenRequest(
+        @NotBlank
+        String refreshToken
+) {}
