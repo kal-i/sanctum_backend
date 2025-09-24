@@ -2,8 +2,11 @@ package com.kali.sanctum.data;
 
 import com.kali.sanctum.enums.Role;
 import com.kali.sanctum.exceptions.ResourceNotFoundException;
+import com.kali.sanctum.model.Mood;
 import com.kali.sanctum.model.Permission;
 import com.kali.sanctum.model.User;
+import com.kali.sanctum.repository.ReflectionPromptRepository;
+import com.kali.sanctum.repository.MoodRepository;
 import com.kali.sanctum.repository.PermissionRepository;
 import com.kali.sanctum.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -13,6 +16,8 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Transactional
@@ -21,6 +26,8 @@ import java.util.Set;
 public class DataInitializer implements ApplicationListener<ApplicationReadyEvent> {
     private final UserRepository userRepository;
     private final PermissionRepository permissionRepository;
+    private final MoodRepository moodRepository;
+    private final ReflectionPromptRepository reflectionPromptRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -29,6 +36,8 @@ public class DataInitializer implements ApplicationListener<ApplicationReadyEven
         createDefaultPermissionsIfNotExist(defaultPermissions);
         createdDefaultSuperAdminIfNotExist();
         createDefaultAdminWithPrivilegesIfNotExist();
+        createDefaultMoods();
+        createDefaultGuidedReflections();
     }
 
     private void createdDefaultSuperAdminIfNotExist() {
@@ -45,7 +54,7 @@ public class DataInitializer implements ApplicationListener<ApplicationReadyEven
 
     private void createDefaultAdminWithPrivilegesIfNotExist() {
         Permission adminDefaultPermissions = permissionRepository.findByName("VIEW_ALL_USER")
-                .orElseThrow(() -> new ResourceNotFoundException("Permission nto found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Permission not found"));
 
         User admin = User.builder()
                 .username("kaii.lii")
@@ -62,7 +71,73 @@ public class DataInitializer implements ApplicationListener<ApplicationReadyEven
     private void createDefaultPermissionsIfNotExist(Set<String> permissions) {
         permissions.stream()
                 .filter(permission -> permissionRepository.findByName(permission).isEmpty())
-                .map(Permission :: new).forEach(permissionRepository :: save);
+                .map(permission -> Permission.builder()
+                        .name(permission)
+                        .build())
+                .forEach(permissionRepository :: save);
 
+    }
+
+    private void createDefaultMoods() {
+        List<Map<String, Object>> moodData = List.of(
+                Map.of("name", "veryHappy", "color", 0xFF, "icon", "\uD83D\uDE04"),
+                Map.of("name", "happy", "color", 0xFF, "icon", "\uD83D\uDE42"),
+                Map.of("name", "neutral", "color", 0xFF, "icon", "\uD83D\uDE10"),
+                Map.of("name", "sad", "color", 0xFF, "icon", "\uD83D\uDE22"),
+                Map.of("name", "angry", "color", 0xFF, "icon", "\uD83D\uDE21")
+        );
+
+        List<Mood> moods = moodData.stream()
+                .map(data -> Mood.builder()
+                        .name((String) data.get("name")) // type cast the value
+                        .color((int) data.get("color"))
+                        .icon((String) data.get("icon"))
+                        .build())
+                .toList();
+
+        moodRepository.saveAll(moods);
+    }
+
+    private void createDefaultGuidedReflections() {
+        List<Mood> moods = moodRepository.findAll();
+
+        Map<String, List<String>> reflectionsMap = Map.of(
+                "veryHappy", List.of(
+                        "What's one thing that made you smile today?",
+                        "Describe a moment today that brought you joy.",
+                        "Who or what brightened your day?"
+                ),
+                "happy", List.of(
+                        "What's been weighing on your heart today?",
+                        "Describe something you wish had gone differently.",
+                        "What's one comforting thing you can tell yourself right now?"
+                ),
+                "neutral", List.of(
+                        "What was the most notable moment of your day?",
+                        "What's one thing you appreciated, even if small?",
+                        "If your day had a color, what would it be?"
+                ),
+                "sad", List.of(
+                        "What's been weighing on your heart today?",
+                        "Describe something you wish had gone differently.",
+                        "What's one comforting thing you can tell yourself right now?"
+
+                ),
+                "angry", List.of(
+                        "What triggered your frustration today?",
+                        "Describe what happened before you started feeling this way.",
+                        "What's one way you can release this tension?"
+                )
+        );
+
+        List<com.kali.sanctum.model.ReflectionPrompt> reflectionPrompts = moods.stream()
+                        .flatMap(mood -> reflectionsMap.getOrDefault(mood.getName(), List.of())
+                                .stream()
+                                .map(question -> com.kali.sanctum.model.ReflectionPrompt.builder()
+                                        .question(question)
+                                        .mood(mood)
+                                        .build())).toList();
+
+        reflectionPromptRepository.saveAll(reflectionPrompts);
     }
 }

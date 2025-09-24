@@ -62,12 +62,6 @@ public class SessionService implements ISessionService{
                 .userAgent(userAgent)
                 .build();
 
-        Instant now = Instant.now();
-
-        Timestamp timestamp = Timestamp.builder()
-                .createdAt(now)
-                .build();
-
         Session session = Session.builder()
                 .hashedRefreshToken(hashedToken)
                 .jwtTokenId(jti)
@@ -77,7 +71,6 @@ public class SessionService implements ISessionService{
                 .status(TokenStatus.ACTIVE)
                 .user(user)
                 .deviceInfo(deviceInfo)
-                .timestamp(timestamp)
                 .build();
 
         sessionRepository.save(session);

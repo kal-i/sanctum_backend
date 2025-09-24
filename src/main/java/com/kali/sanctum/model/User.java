@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.NaturalId;
 
+import java.util.List;
 import java.util.Set;
 
 @Getter
@@ -46,4 +47,7 @@ public class User {
 
     @Column(nullable = false)
     private boolean isVerified = false;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DailyMoodCheck> dailyMoodChecks;
 }

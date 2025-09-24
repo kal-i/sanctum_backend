@@ -3,6 +3,8 @@ package com.kali.sanctum.model;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 
@@ -13,9 +15,11 @@ import java.time.Instant;
 @Builder
 @Embeddable
 public class Timestamp {
-    @Column(nullable = false)
+    @CreationTimestamp
+    @Column(updatable = false, nullable = false)
     private Instant createdAt;
 
+    @UpdateTimestamp
     @Column
     private Instant updatedAt;
 }
