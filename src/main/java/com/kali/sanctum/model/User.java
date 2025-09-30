@@ -46,6 +46,7 @@ public class User {
     private Set<Permission> permissions;
 
     @Column(nullable = false)
+    @Builder.Default
     private boolean isVerified = false;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
