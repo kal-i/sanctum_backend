@@ -5,7 +5,6 @@ import com.kali.sanctum.exceptions.ResourceNotFoundException;
 import com.kali.sanctum.model.User;
 import com.kali.sanctum.repository.UserRepository;
 import com.kali.sanctum.service.audit.IAuditLogService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
