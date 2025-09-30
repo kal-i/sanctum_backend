@@ -18,14 +18,14 @@ public class DailyMoodCheck {
 
     @ElementCollection
     @CollectionTable(
-            name = "daily_mood_keywords",
-            joinColumns = @JoinColumn(name = "daily_mood_check_id"),
+            name = "three_word_summary",
+            joinColumns = @JoinColumn(name = "three_word_summary_id"),
             uniqueConstraints = {
-                    @UniqueConstraint(columnNames = {"daily_mood_check_id", "word"})
+                    @UniqueConstraint(columnNames = {"three_word_summary_id", "word"})
             }
     )
     @Column(name = "word")
-    private Set<String> moodKeywords;
+    private Set<String> threeWordSummary;
 
     @Column(nullable = false )
     private String journalEntry;
@@ -34,9 +34,8 @@ public class DailyMoodCheck {
     @JoinColumn(name = "mood_id")
     private Mood mood;
 
-    @ManyToOne
-    @JoinColumn(name = "reflection_prompt_id")
-    private ReflectionPrompt reflectionPrompt;
+    @OneToOne(mappedBy = "dailyMoodCheck", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Reflection reflection;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
