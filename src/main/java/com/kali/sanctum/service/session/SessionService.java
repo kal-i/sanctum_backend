@@ -4,7 +4,6 @@ import com.kali.sanctum.enums.TokenStatus;
 import com.kali.sanctum.exceptions.ResourceNotFoundException;
 import com.kali.sanctum.model.DeviceInfo;
 import com.kali.sanctum.model.Session;
-import com.kali.sanctum.model.Timestamp;
 import com.kali.sanctum.model.User;
 import com.kali.sanctum.repository.SessionRepository;
 import com.kali.sanctum.security.jwt.JwtUtils;
