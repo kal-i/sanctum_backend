@@ -19,9 +19,9 @@ public class DailyMoodCheck {
     @ElementCollection
     @CollectionTable(
             name = "three_word_summary",
-            joinColumns = @JoinColumn(name = "three_word_summary_id"),
+            joinColumns = @JoinColumn(name = "daily_mood_check_id"),
             uniqueConstraints = {
-                    @UniqueConstraint(columnNames = {"three_word_summary_id", "word"})
+                    @UniqueConstraint(columnNames = {"daily_mood_check_id", "word"})
             }
     )
     @Column(name = "word")
