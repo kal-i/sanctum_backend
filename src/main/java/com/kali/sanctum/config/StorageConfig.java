@@ -3,7 +3,6 @@ package com.kali.sanctum.config;
 import com.kali.sanctum.service.storage.IStorageService;
 import com.kali.sanctum.service.storage.LocalStorageService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
