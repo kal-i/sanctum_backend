@@ -27,9 +27,6 @@ public class DailyMoodCheck {
     @Column(name = "word")
     private Set<String> threeWordSummary;
 
-    @Column(nullable = false )
-    private String journalEntry;
-
     @ManyToOne
     @JoinColumn(name = "mood_id")
     private Mood mood;
