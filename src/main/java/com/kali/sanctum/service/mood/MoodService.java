@@ -1,11 +1,14 @@
 package com.kali.sanctum.service.mood;
 
 import com.kali.sanctum.dto.request.CreateMoodRequest;
+import com.kali.sanctum.dto.response.MoodDto;
 import com.kali.sanctum.exceptions.AlreadyExistsException;
 import com.kali.sanctum.exceptions.ResourceNotFoundException;
 import com.kali.sanctum.model.Mood;
 import com.kali.sanctum.repository.MoodRepository;
 import lombok.RequiredArgsConstructor;
+
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -14,6 +17,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class MoodService implements IMoodService {
     private final MoodRepository moodRepository;
+    private final ModelMapper modelMapper;
 
     @Override
     public Mood getMoodById(Long id) {
@@ -34,5 +38,10 @@ public class MoodService implements IMoodService {
 
                     return moodRepository.save(mood);
                 }).orElseThrow(() -> new AlreadyExistsException(request.name() + " already exists"));
+    }
+
+    @Override
+    public MoodDto convertToDto(Mood mood) {
+        return modelMapper.map(mood, MoodDto.class);
     }
 }
