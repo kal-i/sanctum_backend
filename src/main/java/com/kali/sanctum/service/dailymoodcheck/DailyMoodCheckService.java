@@ -2,9 +2,11 @@ package com.kali.sanctum.service.dailymoodcheck;
 
 import com.kali.sanctum.dto.request.LogDailyMoodCheckRequest;
 import com.kali.sanctum.dto.response.DailyMoodCheckDto;
+import com.kali.sanctum.enums.DateRange;
 import com.kali.sanctum.exceptions.AlreadyExistsException;
 import com.kali.sanctum.exceptions.ResourceNotFoundException;
 import com.kali.sanctum.interfaces.CommonTrigger;
+import com.kali.sanctum.interfaces.MoodBubble;
 import com.kali.sanctum.model.*;
 import com.kali.sanctum.repository.DailyMoodCheckRepository;
 import com.kali.sanctum.service.mood.IMoodService;
@@ -101,6 +103,23 @@ public class DailyMoodCheckService implements IDailyMoodCheckService {
         User user = userService.getAuthenticatedUser();
 
         return dailyMoodCheckRepository.findCommonDailyMoodTriggersByUser(user.getId(), limit);
+    }
+
+    @Override
+    public List<MoodBubble> getMoodBubbles(DateRange dateRange) {
+        User user = userService.getAuthenticatedUser();
+
+        Instant now = Instant.now();
+        Instant startDate;
+
+        switch (dateRange) {
+            case WEEKLY -> startDate = now.minus(7, ChronoUnit.DAYS);
+            case MONTHLY -> startDate = now.minus(1, ChronoUnit.MONTHS);
+            case YEARLY -> startDate = now.minus(1, ChronoUnit.YEARS);
+            default -> throw new IllegalArgumentException("Unsupported range:" + dateRange);
+        }
+
+        return dailyMoodCheckRepository.findMoodBubblesByUserAndDateRange(user.getId(), startDate, now);
     }
 
     @Override
