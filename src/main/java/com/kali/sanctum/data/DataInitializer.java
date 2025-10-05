@@ -23,8 +23,10 @@ import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 @Transactional
@@ -59,12 +61,26 @@ public class DataInitializer implements ApplicationListener<ApplicationReadyEven
 
                 User savedAdminUser = userRepository.save(superAdmin);
 
+                // a default list of common mood triggers
+                List<String> commonTriggers = List.of(
+                                "nature", "coffee", "code", "travel", "food");
+
+                Random random = new Random();
                 for (int i = 0; i < 10; i++) {
-                        Set<String> threeWordSummary = Set.of("nature", "coffee", "code");
+                        Set<String> threeWordSummary = new HashSet<>(); // = Set.of("nature", "coffee", "code");
+
+                        // the reason why sometimes we're getting less than 3 words is because of the Set data structure
+                        // it doesn't allow duplicate values
+                        // so if we randomly pick the same word more than once, it will only be stored once in the Set
+                        for (int j = 0; j < 3; j++) {
+                                int randomIndex = random.nextInt(commonTriggers.size());
+                                threeWordSummary.add(commonTriggers.get(randomIndex));
+                        }
 
                         String reflectionEntry = "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et";
 
-                        Mood mood = moodRepository.findById(1L)
+                        Long moodId = random.nextLong(1, 6); // gen between 1 - 5
+                        Mood mood = moodRepository.findById(moodId)
                                         .orElseThrow(() -> new ResourceNotFoundException("Mood not found"));
 
                         ReflectionPrompt reflectionPrompt = reflectionPromptRepository.findById(1L)
@@ -160,8 +176,7 @@ public class DataInitializer implements ApplicationListener<ApplicationReadyEven
                                 "sad", List.of(
                                                 "What's been weighing on your heart today?",
                                                 "Describe something you wish had gone differently.",
-                                                "What's one comforting thing you can tell yourself right now?"
-                                ),
+                                                "What's one comforting thing you can tell yourself right now?"),
                                 "angry", List.of(
                                                 "What triggered your frustration today?",
                                                 "Describe what happened before you started feeling this way.",
