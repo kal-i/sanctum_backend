@@ -27,10 +27,6 @@ public class DailyMoodCheck {
     @Column(name = "word")
     private Set<String> threeWordSummary;
 
-    @ManyToOne
-    @JoinColumn(name = "mood_id")
-    private Mood mood;
-
     @OneToOne(mappedBy = "dailyMoodCheck", cascade = CascadeType.ALL, orphanRemoval = true)
     private Reflection reflection;
 
