@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -18,6 +19,11 @@ import java.util.Optional;
 public class MoodService implements IMoodService {
     private final MoodRepository moodRepository;
     private final ModelMapper modelMapper;
+
+        @Override
+    public List<Mood> getAllMoods() {
+        return moodRepository.findAll();
+    }
 
     @Override
     public Mood getMoodById(Long id) {
