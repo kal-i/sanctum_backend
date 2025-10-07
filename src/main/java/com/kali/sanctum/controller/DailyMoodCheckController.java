@@ -43,11 +43,22 @@ public class DailyMoodCheckController {
         }
     }
 
+    @GetMapping("generate-reflection-prompt")
+    public ResponseEntity<ApiResponse> generateReflectionPrompt(@RequestParam String mood) {
+        try {
+            String prompt = dailyMoodCheckService.generateContextualPrompt(mood);
+            return ResponseEntity.ok().body(new ApiResponse("Fetched prompt", prompt));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(new ApiResponse(e.getMessage(), null));
+        }
+    }
+
     @PostMapping("log-daily-mood-check")
     public ResponseEntity<ApiResponse> logDailyMoodCheck(@RequestBody LogDailyMoodCheckRequest request) {
         try {
             DailyMoodCheck dailyMoodCheck = dailyMoodCheckService.logDailyMoodCheck(request);
-            return ResponseEntity.ok(new ApiResponse("Logged daily mood check", dailyMoodCheck));
+            DailyMoodCheckDto dailyMoodCheckDto = dailyMoodCheckService.convertToDto(dailyMoodCheck);
+            return ResponseEntity.ok(new ApiResponse("Logged daily mood check", dailyMoodCheckDto));
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(NOT_FOUND).body(new ApiResponse(e.getMessage(), null));
         }
