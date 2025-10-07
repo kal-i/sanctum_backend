@@ -1,5 +1,6 @@
 package com.kali.sanctum.service.dailymoodcheck;
 
+import com.kali.sanctum.dto.request.CreatePromptRequest;
 import com.kali.sanctum.dto.request.LogDailyMoodCheckRequest;
 import com.kali.sanctum.dto.response.DailyMoodCheckDto;
 import com.kali.sanctum.enums.DateRange;
@@ -9,6 +10,7 @@ import com.kali.sanctum.interfaces.CommonTrigger;
 import com.kali.sanctum.interfaces.MoodBubble;
 import com.kali.sanctum.model.*;
 import com.kali.sanctum.repository.DailyMoodCheckRepository;
+import com.kali.sanctum.service.aipromptservice.IAiPromptService;
 import com.kali.sanctum.service.mood.IMoodService;
 import com.kali.sanctum.service.reflectionprompt.IReflectionPromptService;
 import com.kali.sanctum.service.user.IUserService;
@@ -19,6 +21,8 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -33,6 +37,7 @@ public class DailyMoodCheckService implements IDailyMoodCheckService {
     private final IMoodService moodService;
     private final IReflectionPromptService reflectionPromptService;
     private final IUserService userService;
+    private final IAiPromptService aiPromptService;
     private final ModelMapper modelMapper;
 
     @Override
@@ -55,6 +60,63 @@ public class DailyMoodCheckService implements IDailyMoodCheckService {
     }
 
     @Override
+    public String generateContextualPrompt(String mood) {
+        User user = userService.getAuthenticatedUser();
+
+        Instant now = Instant.now();
+        Instant startDate = Instant.now().minus(7, ChronoUnit.DAYS);
+
+        List<MoodBubble> moodBubbles = dailyMoodCheckRepository.findMoodBubblesByUserAndDateRange(user.getId(),
+                startDate, now);
+        List<CommonTrigger> commonTriggers = dailyMoodCheckRepository.findCommonDailyMoodTriggersByUser(user.getId(),
+                5);
+
+        Optional<String> lastReflectionOpt = Optional
+                .ofNullable(dailyMoodCheckRepository.findLastReflectionEntryByUser(user.getId()));
+
+        if (moodBubbles.isEmpty() && commonTriggers.isEmpty() && lastReflectionOpt.isEmpty()) {
+            return generateSimpleReflectionPrompt(mood);
+        }
+
+        String lastReflection = lastReflectionOpt.orElse("No reflection found");
+
+        String moodSummary = moodBubbles.isEmpty() ? "No mood data this week"
+                : moodBubbles.stream().map(mb -> String.format("%s (%.1f%%)", mb.getMood(), mb.getPercentage()))
+                        .collect(Collectors.joining(", "));
+
+        String triggersSummary = commonTriggers.isEmpty() ? "No frequent triggers identified"
+                : commonTriggers.stream().map(CommonTrigger::getWord).collect(Collectors.joining(", "));
+
+        String context = String.format("""
+                You are a gentle and supportive reflection coach.
+                You help users process emotions through compassionate questions.
+
+                Username: %s
+                Current mood: %s
+                Recent moods: %s
+                Frequent triggers: %s
+                Last reflection: "%s"
+
+                Based on the user's recent mood trends, frequent triggers, and current mood,
+                craft a *single, concise reflection question* that helps them understand their emotions
+                or find balance. Keep it empathetic and natural, as if guiding a friend.
+                Avoid repeating previous reflections.
+                """, user.getUsername(), mood, moodSummary, triggersSummary, lastReflection);
+
+        return aiPromptService.generatePrompt(context);
+    }
+
+    private String generateSimpleReflectionPrompt(String mood) {
+        String prompt = String.format("""
+                    Generate a short reflection question for someone feeling %s.
+                    Make it thoughtful and encouraging introspection.
+                    Avoid mentioning past events.
+                """, mood);
+
+        return aiPromptService.generatePrompt(prompt);
+    }
+
+    @Override
     public DailyMoodCheck logDailyMoodCheck(LogDailyMoodCheckRequest request) {
         User user = userService.getAuthenticatedUser();
 
@@ -63,14 +125,10 @@ public class DailyMoodCheckService implements IDailyMoodCheckService {
         }
 
         Mood mood = moodService.getMoodById(request.moodId());
-        ReflectionPrompt reflectionPrompt = reflectionPromptService.getById(request.reflectionPromptId());
-
-        if (!reflectionPrompt.getMood().equals(mood)) {
-            throw new IllegalArgumentException("Reflection prompt does not match selected mood");
-        }
+        ReflectionPrompt reflectionPrompt = reflectionPromptService
+                .createPrompt(new CreatePromptRequest(mood.getId(), request.reflectionPrompt()));
 
         DailyMoodCheck dailyMoodCheck = DailyMoodCheck.builder()
-                .mood(mood)
                 .threeWordSummary(request.threeWordSummary())
                 .user(user)
                 .build();
