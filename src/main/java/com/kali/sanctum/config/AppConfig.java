@@ -24,16 +24,15 @@ public class AppConfig {
 
         // nested mapping and convertion of entities to dto objects
         modelMapper.typeMap(Mood.class, MoodDto.class);
-        modelMapper.typeMap(ReflectionPrompt.class, ReflectionPromptDto.class);
+        modelMapper.typeMap(ReflectionPrompt.class, ReflectionPromptDto.class)
+                .addMapping(ReflectionPrompt::getMood, ReflectionPromptDto::setMoodDto);
         modelMapper.typeMap(Reflection.class, ReflectionDto.class)
-                .addMappings(mapper -> {
-                    mapper.map(Reflection::getReflectionPrompt, ReflectionDto::setReflectionPromptDto);
-                });
+                .addMapping(
+                        Reflection::getReflectionPrompt, ReflectionDto::setReflectionPromptDto);
         modelMapper.typeMap(Timestamp.class, TimestampDto.class);
 
         modelMapper.typeMap(DailyMoodCheck.class, DailyMoodCheckDto.class)
                 .addMappings(mapper -> {
-                    mapper.map(DailyMoodCheck::getMood, DailyMoodCheckDto::setMoodDto);
                     mapper.map(DailyMoodCheck::getReflection, DailyMoodCheckDto::setReflectionDto);
                     mapper.map(DailyMoodCheck::getTimestamp, DailyMoodCheckDto::setTimestampDto);
                 });
