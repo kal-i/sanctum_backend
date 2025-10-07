@@ -6,5 +6,5 @@ import lombok.Data;
 public class ReflectionPromptDto {
         private Long id;
         private String question;
-
+        private MoodDto moodDto;
 }
