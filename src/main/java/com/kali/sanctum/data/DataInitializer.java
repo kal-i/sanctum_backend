@@ -83,9 +83,7 @@ public class DataInitializer implements ApplicationListener<ApplicationReadyEven
                         Mood mood = moodRepository.findById(moodId)
                                         .orElseThrow(() -> new ResourceNotFoundException("Mood not found"));
 
-                        ReflectionPrompt reflectionPrompt = reflectionPromptRepository.findById(1L)
-                                        .orElseThrow(() -> new ResourceNotFoundException(
-                                                        "Reflection prompt not found"));
+                        ReflectionPrompt reflectionPrompt = reflectionPromptRepository.findRandomByMoodId(mood.getId());
 
                         Instant createdAt = Instant.now().minus(i, ChronoUnit.DAYS);
 
@@ -94,7 +92,6 @@ public class DataInitializer implements ApplicationListener<ApplicationReadyEven
                                         .build();
 
                         DailyMoodCheck dailyMoodCheck = DailyMoodCheck.builder()
-                                        .mood(mood)
                                         .threeWordSummary(threeWordSummary)
                                         .user(savedAdminUser)
                                         .timestamp(timestamp)
