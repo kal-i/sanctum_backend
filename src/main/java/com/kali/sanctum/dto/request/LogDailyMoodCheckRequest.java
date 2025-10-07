@@ -11,7 +11,7 @@ public record LogDailyMoodCheckRequest(
         @NotNull
         Long moodId,
         @NotNull
-        Long reflectionPromptId,
+        String reflectionPrompt,
         Set<String> threeWordSummary,
         @NotBlank
         String entry
