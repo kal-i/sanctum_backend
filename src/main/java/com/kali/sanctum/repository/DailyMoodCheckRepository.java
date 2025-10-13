@@ -25,7 +25,7 @@ public interface DailyMoodCheckRepository extends JpaRepository<DailyMoodCheck, 
                 ON dmc.id = r.daily_mood_check_id
             JOIN reflection_prompt rp
                 ON r.reflection_prompt_id = rp.id
-            JOIN moods m 
+            JOIN moods m
                 ON rp.mood_id = m.id
             WHERE dmc.user_id = :userId
                 AND dmc.created_at >= :startDate
@@ -34,10 +34,9 @@ public interface DailyMoodCheckRepository extends JpaRepository<DailyMoodCheck, 
             ORDER BY percentage DESC
             """, nativeQuery = true)
     List<MoodBubble> findMoodBubblesByUserAndDateRange(
-        @Param("userId") Long userId,
-        @Param("startDate") Instant startDate,
-        @Param("endDate") Instant endDate
-    );
+            @Param("userId") Long userId,
+            @Param("startDate") Instant startDate,
+            @Param("endDate") Instant endDate);
 
     @Query(value = """
             SELECT tws.word, COUNT(*) AS frequency
@@ -51,15 +50,30 @@ public interface DailyMoodCheckRepository extends JpaRepository<DailyMoodCheck, 
             """, nativeQuery = true)
     List<CommonTrigger> findCommonDailyMoodTriggersByUser(@Param("userId") Long userId,
             @Param("limit") int limit);
-            
-            @Query(value = """
-                    SELECT r.entry 
-                    FROM daily_mood_check dmc
-                    JOIN reflection r
-                        ON dmc.id = r.daily_mood_check_id
-                    WHERE dmc.user_id = :userId
-                    ORDER BY dmc.created_at DESC
-                    LIMIT 1
-                    """, nativeQuery = true)
-            String findLastReflectionEntryByUser(@Param("userId") Long userId);
+
+    @Query(value = """
+            SELECT r.entry
+            FROM daily_mood_check dmc
+            JOIN reflection r
+                ON dmc.id = r.daily_mood_check_id
+            WHERE dmc.user_id = :userId
+            ORDER BY dmc.created_at DESC
+            LIMIT 1
+            """, nativeQuery = true)
+    String findLastReflectionEntryByUser(@Param("userId") Long userId);
+
+    @Query(value = """
+            SELECT r.entry
+            FROM daily_mood_check dmc
+            JOIN reflection r
+                ON dmc.id = r.daily_mood_check_id
+            WHERE dmc.user_id = :userId
+                AND dmc.created_at >= :startDate
+                AND dmc.created_at = :endDate
+            ORDER BY dmc.created_at ASC
+            """, nativeQuery = true)
+    List<String> findReflectionEntriesByUserAndDateRange(
+            @Param("userId") Long userId,
+            @Param("startDate") Instant startDate,
+            @Param("endDate") Instant endDate);
 }
