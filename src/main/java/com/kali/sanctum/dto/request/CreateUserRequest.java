@@ -7,12 +7,14 @@ import lombok.Builder;
 
 @Builder
 public record CreateUserRequest(
-        @NotBlank(message = "User cannot be empty or null")
+        @NotBlank(message = "Username cannot be blank.")
         String username,
-        @Email
-        @NotBlank(message = "Email cannot be empty or null")
+
+        @Email(message = "Invalid email format. Please enter a valid email.")
+        @NotBlank(message = "Email cannot be blank.")
         String email,
-        @NotBlank(message = "Password cannot be empty or null")
-        @Size(min = 8, max = 64, message = "Password must be between 8 and 64 characters long")
+        
+        @NotBlank(message = "Password cannot be blank.")
+        @Size(min = 8, max = 64, message = "Password must be between 8 and 64 characters long.")
         String password
 ) {}

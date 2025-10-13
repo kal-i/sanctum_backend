@@ -6,9 +6,10 @@ import lombok.Builder;
 
 @Builder
 public record VerifyOtpRequest(
-        @Email
-        @NotBlank
+        @Email(message = "Please enter a valid email.")
+        @NotBlank(message = "Email is required.")
         String email,
-        @NotBlank
+
+        @NotBlank(message = "Otp code is required.")
         String otpCode
 ) {}
