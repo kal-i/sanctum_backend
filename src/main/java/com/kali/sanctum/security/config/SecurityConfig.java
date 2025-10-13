@@ -68,17 +68,16 @@ public class SecurityConfig {
                 )
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(jwtAuthEntryPoint) // handles 401
-                        .accessDeniedHandler(customAccessDeniedHandler) // handles 4033
+                        .accessDeniedHandler(customAccessDeniedHandler) // handles 403
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PathRequest.toH2Console()).permitAll()
                         .requestMatchers("/auth/**").permitAll()
                         .anyRequest().authenticated()
-                );
-
-        http.authenticationProvider(daoAuthenticationProvider());
-        http.addFilterBefore(authTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+                )
+                .authenticationProvider(daoAuthenticationProvider())
+                .addFilterBefore(authTokenFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
