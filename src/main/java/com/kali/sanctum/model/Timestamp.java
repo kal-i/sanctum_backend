@@ -2,11 +2,12 @@ package com.kali.sanctum.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+import jakarta.persistence.PrePersist;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
+
+import org.hibernate.annotations.UpdateTimestamp;
 
 @Getter
 @Setter
@@ -15,11 +16,17 @@ import java.time.Instant;
 @Builder
 @Embeddable
 public class Timestamp {
-    @CreationTimestamp
     @Column(updatable = false, nullable = false)
     private Instant createdAt;
 
     @UpdateTimestamp
     @Column
     private Instant updatedAt;
+
+    @PrePersist
+    public void prePersist() {
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
+    }
 }
