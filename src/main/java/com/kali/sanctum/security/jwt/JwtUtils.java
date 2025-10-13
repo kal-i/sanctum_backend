@@ -69,16 +69,21 @@ public class JwtUtils {
                 .getSubject();
     }
 
-    public boolean validateToken(String token) {
-        try {
-            Jwts.parser()
-                    .verifyWith(key())
-                    .build()
-                    .parseSignedClaims(token);
+    // Reusable JWT validation; throws detailed exceptions for service-layer use when invalid.
+    public void validateToken(String token) {
+        Jwts.parser()
+                .verifyWith(key())
+                .build()
+                .parseSignedClaims(token);
+    }
 
+    // Quick check validation; returns false instead of throwing, to avoid unnecessary exception handling.
+    public boolean isValidToken(String token) {
+        try {
+            validateToken(token);
             return true;
-        } catch (ExpiredJwtException | UnsupportedJwtException e) {
-            throw new JwtException(e.getMessage());
+        } catch (JwtException e) {
+            return false;
         }
     }
 
