@@ -1,6 +1,6 @@
 package com.kali.sanctum.exceptions;
 
-public class OtpVerificationException extends RuntimeException {
+public abstract class OtpVerificationException extends RuntimeException {
   public OtpVerificationException(String message) {
     super(message);
   }

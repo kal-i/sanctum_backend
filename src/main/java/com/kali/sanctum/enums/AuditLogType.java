@@ -7,6 +7,7 @@ public enum AuditLogType {
     DELETE_USER,
     LOGIN_USER,
     LOGOUT_USER,
+    CREATE_USER_ATTEMPT,
     FAILED_LOGIN_ATTEMPT,
 
     // Permission-related

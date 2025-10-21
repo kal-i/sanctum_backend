@@ -2,6 +2,7 @@ package com.kali.sanctum.service.user;
 
 import com.kali.sanctum.dto.request.CreateUserRequest;
 import com.kali.sanctum.dto.request.UpdateUserRequest;
+import com.kali.sanctum.dto.request.UpdateUserRoleRequest;
 import com.kali.sanctum.dto.response.UserDto;
 import com.kali.sanctum.enums.AuditLogType;
 import com.kali.sanctum.enums.Role;
@@ -16,6 +17,9 @@ import com.kali.sanctum.service.permission.IPermissionService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -36,28 +40,50 @@ public class UserService implements IUserService {
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public Page<UserDto> getAllUsers(int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Page<User> users = userRepository.findAll(pageable);
+        return convertToDtoPage(users);
     }
 
     @Override
-    public List<User> getStandardUsers() {
-        return userRepository.findByRole(Role.USER);
+    public Page<UserDto> getStandardUsers(int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Page<User> standardUsers = userRepository.findByRole(Role.USER, pageable);
+        return convertToDtoPage(standardUsers);
     }
 
     @Override
-    public List<User> getUsersByRole(Role role) {
-        return userRepository.findByRole(role);
+    public Page<UserDto> getUsersByRole(Role role, int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Page<User> users = userRepository.findByRole(role, pageable);
+        return convertToDtoPage(users);
+    }
+
+    private Page<UserDto> convertToDtoPage(Page<User> users) {
+        return users.map(this::convertToDto);
     }
 
     @Override
-    public User getUserById(Long id) {
+    public UserDto getUserById(Long id) {
+        User user = getUserEntityById(id);
+        return convertToDto(user);
+    }
+
+    @Override
+    public User getUserEntityById(Long id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found."));
     }
 
     @Override
-    public User createUser(CreateUserRequest createUserRequest) {
+    public UserDto getCurrentUser() {
+        User user = getAuthenticatedUser();
+        return convertToDto(user);
+    }
+
+    @Override
+    public UserDto createUser(CreateUserRequest createUserRequest) {
         return Optional.of(createUserRequest)
                 .filter(user -> !userRepository.existsByEmail(user.email()))
                 .map(req -> {
@@ -74,60 +100,71 @@ public class UserService implements IUserService {
                             savedUser.getId(),
                             AuditLogType.CREATE_USER,
                             savedUser.getId(),
-                            "Created User: " + user.getEmail()
-                    );
+                            "Created User: " + user.getEmail());
 
-                    return savedUser;
-                }).orElseThrow(() -> new AlreadyExistsException(createUserRequest.email() + " already exists"));
-    }
-
-    @Override
-    public User updateUserProfile(Long id, UpdateUserRequest updateUserRequest) {
-        return userRepository.findById(id)
-                .map(existingUser -> {
-                    existingUser.setUsername(updateUserRequest.username());
-
-                    User updatedUser = userRepository.save(existingUser);
-
+                    return convertToDto(savedUser);
+                }).orElseThrow(() -> {
                     auditLogService.logAction(
-                            updatedUser.getId(),
-                            AuditLogType.UPDATE_USER,
-                            updatedUser.getId(),
-                            "Updated username to " + updatedUser.getUsername()
-                    );
+                            null,
+                            AuditLogType.CREATE_USER_ATTEMPT,
+                            null,
+                            "Attempted to create user with existing email: " + createUserRequest.email());
+                    return new AlreadyExistsException("An account with this email already exists.");
 
-                    return updatedUser;
-                }).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                });
     }
 
     @Override
-    public User updateUserRole(Long id, Role role) {
+    public UserDto updateUserProfile(Long id, UpdateUserRequest updateUserRequest) {
+        // check first if the resource (in this case, user)
+        // the prob with check first approach is this somehow exposes that this ID exist
+        User user = getAuthenticatedUser();
+
+        if (!user.getId().equals(id)) {
+            throw new ResourceNotFoundException("User not found.");
+        }
+
+        // we can skip checking the repository because we already know that this id
+        // exist
+        user.setUsername(updateUserRequest.username());
+
+        User updatedUser = userRepository.save(user);
+
+        auditLogService.logAction(
+                updatedUser.getId(),
+                AuditLogType.UPDATE_USER,
+                updatedUser.getId(),
+                "Updated username to " + updatedUser.getUsername());
+        return convertToDto(updatedUser);
+    }
+
+    @Override
+    public UserDto updateUserRole(Long id, UpdateUserRoleRequest updateUserRoleRequest) {
         return userRepository.findById(id)
                 .map(existingUser -> {
-                    existingUser.setRole(role);
+                    existingUser.setRole(updateUserRoleRequest.role());
 
                     User updatedUser = userRepository.save(existingUser);
-                    User actorUser = getAuthenticatedUser(); // get current user performing the task [Admin, SuperAdmin]
+                    User actorUser = getAuthenticatedUser();
 
                     auditLogService.logAction(
                             actorUser.getId(),
                             AuditLogType.UPDATE_USER,
                             updatedUser.getId(),
-                            "Updated the role of user " + updatedUser.getEmail() + " to " + updatedUser.getRole()
-                    );
+                            "Updated the role of user " + updatedUser.getEmail() + " to " + updatedUser.getRole());
 
-                    return updatedUser;
-                }).orElseThrow(() -> new ResourceNotFoundException("User not found"));    }
+                    return convertToDto(updatedUser);
+                }).orElseThrow(() -> new ResourceNotFoundException("User not found."));
+    }
 
     @Transactional
     @Override
     public void grantPermission(Long id, String permissionName) {
-        User user = getUserById(id);
+        User user = getUserEntityById(id);
 
         Permission permission = permissionRepository.findByName(permissionName)
                 .orElseGet(() -> permissionRepository.save(
-                        Permission.builder().name(permissionName).build()
-                        ));
+                        Permission.builder().name(permissionName).build()));
 
         if (user.getPermissions() == null) {
             user.setPermissions(new HashSet<>());
@@ -140,20 +177,19 @@ public class UserService implements IUserService {
                 actorUser.getId(),
                 AuditLogType.GRANT_PERMISSION,
                 user.getId(),
-                "Granted permission " + permission.getName() + " to user " + user.getEmail()
-        );
+                "Granted permission " + permission.getName() + " to user " + user.getEmail());
 
         /*
-        * Can be omitted because of @Transaction.
-        * JPA will automatically persist changes at the end of the transaction.
-        * */
+         * Can be omitted because of @Transactional.
+         * JPA will automatically persist changes at the end of the transaction.
+         */
         // userRepository.save(user);
     }
 
     @Transactional
     @Override
     public void revokePermission(Long userId, Long permissionId) {
-        User user = getUserById(userId);
+        User user = getUserEntityById(userId);
         Permission permission = permissionService.getPermissionById(permissionId);
 
         if (user.getPermissions() != null) {
@@ -164,8 +200,7 @@ public class UserService implements IUserService {
                     actorUser.getId(),
                     AuditLogType.GRANT_PERMISSION,
                     user.getId(),
-                    "Revoked permission " + permission.getName() + " to user " + user.getEmail()
-            );
+                    "Revoked permission " + permission.getName() + " to user " + user.getEmail());
         }
         // userRepository.save(user);
     }
@@ -181,11 +216,16 @@ public class UserService implements IUserService {
                             actorUser.getId(),
                             AuditLogType.DELETE_USER,
                             user.getId(),
-                            "Deleted user with email: " + user.getEmail()
-                    );
+                            "Deleted user with email: " + user.getEmail());
                 }, () -> {
                     throw new ResourceNotFoundException("User not found");
                 });
+    }
+
+    @Override
+    public List<UserDto> convertToDtos(List<User> users) {
+        return users.stream()
+                .map(this::convertToDto).toList();
     }
 
     @Override

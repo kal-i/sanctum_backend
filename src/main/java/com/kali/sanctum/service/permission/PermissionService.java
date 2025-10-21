@@ -18,7 +18,7 @@ public class PermissionService implements IPermissionService {
     @Override
     public Permission getPermissionById(Long id) {
         return permissionRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Permission does not exist"));
+                .orElseThrow(() -> new ResourceNotFoundException("Permission not found."));
     }
 
     @Override

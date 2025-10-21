@@ -2,6 +2,10 @@ package com.kali.sanctum.service.otp;
 
 import com.kali.sanctum.dto.request.SendOtpRequest;
 import com.kali.sanctum.dto.request.VerifyOtpRequest;
+import com.kali.sanctum.exceptions.InvalidOtpException;
+import com.kali.sanctum.exceptions.OtpAlreadySentException;
+import com.kali.sanctum.exceptions.OtpExpiredException;
+import com.kali.sanctum.exceptions.OtpNotFoundException;
 import com.kali.sanctum.exceptions.OtpVerificationException;
 import com.kali.sanctum.exceptions.ResourceNotFoundException;
 import com.kali.sanctum.model.Otp;
@@ -40,7 +44,7 @@ public class EmailService implements IEmailService {
                 // delete the existing otp
                 otpRepository.deleteById(existingOtp.getId());
             } else {
-                throw new OtpVerificationException("An otp code was already sent. Please check your email.");
+                throw new OtpAlreadySentException("An OTP code was already sent. Please check your email.");
             }
         }
 
@@ -70,15 +74,15 @@ public class EmailService implements IEmailService {
 
         Otp otp = otpRepository.findByUserEmail(user.getEmail());
         if (otp == null) {
-            throw new OtpVerificationException("No otp code generated for this user");
+            throw new OtpNotFoundException("No OTP code generated for this user.");
         }
 
         if (otp.getExpiration().isBefore(LocalDateTime.now())) {
-            throw new OtpVerificationException("Otp code expired");
+            throw new OtpExpiredException("OTP code expired.");
         }
 
         if (!otp.getCode().equals(verifyOtpRequest.otpCode())) {
-            throw new OtpVerificationException("Invalid otp code");
+            throw new InvalidOtpException("Invalid OTP code.");
         }
 
         user.setVerified(true);

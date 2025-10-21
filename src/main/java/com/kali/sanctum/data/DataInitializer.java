@@ -48,6 +48,7 @@ public class DataInitializer implements ApplicationListener<ApplicationReadyEven
                 createDefaultGuidedReflections();
                 createdDefaultSuperAdminIfNotExist();
                 createDefaultAdminWithPrivilegesIfNotExist();
+                createDefaultStandardUserIfNotExist();
         }
 
         private void createdDefaultSuperAdminIfNotExist() {
@@ -63,21 +64,47 @@ public class DataInitializer implements ApplicationListener<ApplicationReadyEven
 
                 // a default list of common mood triggers
                 List<String> commonTriggers = List.of(
-                                "nature", "coffee", "code", "travel", "food");
+                                "nature",
+                                "coffee",
+                                "code",
+                                "travel",
+                                "food",
+                                "work",
+                                "finace",
+                                "family",
+                                "study",
+                                "expectation");
+
+                List<Map<String, List<String>>> reflections = List.of(
+                                Map.of("veryHappy", List.of(
+                                                "Today felt like everything finally clicked into place — I couldn’t stop smiling no matter how small the moment was.",
+                                                "I’m overflowing with gratitude; it’s one of those days where life feels light and full of possibilities.")),
+                                Map.of("happy", List.of(
+                                                "I didn’t have a perfect day, but the little wins were enough to keep my spirits high.",
+                                                "I felt genuinely content today, enjoying the simple things without overthinking too much.")),
+                                Map.of("neutral", List.of(
+                                                "Nothing special happened today, but that’s okay — sometimes calm and steady is what I need.",
+                                                "I went through the day without much emotion, just flowing with whatever came my way.")),
+                                Map.of("sad", List.of(
+                                                "I tried to stay positive, but the weight in my chest made everything feel a bit heavier than usual.",
+                                                "It’s one of those days where I can’t quite explain the sadness, but I know it will pass eventually.")),
+                                Map.of("angry", List.of(
+                                                "I felt frustrated today because things didn’t go the way I expected, and it was hard to stay patient.",
+                                                "My temper got the best of me for a while, but at least I recognized it before it took full control.")));
 
                 Random random = new Random();
                 for (int i = 0; i < 10; i++) {
                         Set<String> threeWordSummary = new HashSet<>(); // = Set.of("nature", "coffee", "code");
 
-                        // the reason why sometimes we're getting less than 3 words is because of the Set data structure
+                        // the reason why sometimes we're getting less than 3 words is because of the
+                        // Set data structure
                         // it doesn't allow duplicate values
-                        // so if we randomly pick the same word more than once, it will only be stored once in the Set
+                        // so if we randomly pick the same word more than once, it will only be stored
+                        // once in the Set
                         for (int j = 0; j < 3; j++) {
                                 int randomIndex = random.nextInt(commonTriggers.size());
                                 threeWordSummary.add(commonTriggers.get(randomIndex));
                         }
-
-                        String reflectionEntry = "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et";
 
                         Long moodId = random.nextLong(1, 6); // gen between 1 - 5
                         Mood mood = moodRepository.findById(moodId)
@@ -85,11 +112,21 @@ public class DataInitializer implements ApplicationListener<ApplicationReadyEven
 
                         ReflectionPrompt reflectionPrompt = reflectionPromptRepository.findRandomByMoodId(mood.getId());
 
+                        String reflectionEntry = reflections.stream()
+                                        .filter(map -> map.containsKey(mood.getName()))
+                                        .map(map -> (List<String>) map.get(mood.getName()))
+                                        .findFirst()
+                                        .map(list -> list.get(random.nextInt(list.size())))
+                                        .orElse("No reflection found for mood: " + mood.getName());
+
                         Instant createdAt = Instant.now().minus(i, ChronoUnit.DAYS);
 
                         Timestamp timestamp = Timestamp.builder()
                                         .createdAt(createdAt)
                                         .build();
+
+                        System.out.println("b4 index: " + i + "created at raw: " + createdAt + " created at: "
+                                        + timestamp.getCreatedAt() + " updated at: " + timestamp.getUpdatedAt());
 
                         DailyMoodCheck dailyMoodCheck = DailyMoodCheck.builder()
                                         .threeWordSummary(threeWordSummary)
@@ -106,6 +143,9 @@ public class DataInitializer implements ApplicationListener<ApplicationReadyEven
                         dailyMoodCheck.setReflection(reflection);
 
                         dailyMoodCheckRepository.save(dailyMoodCheck);
+                        System.out.println("after index: " + i + " created at: "
+                                        + dailyMoodCheck.getTimestamp().getCreatedAt() + " updated at: "
+                                        + dailyMoodCheck.getTimestamp().getUpdatedAt());
                 }
         }
 
@@ -123,6 +163,18 @@ public class DataInitializer implements ApplicationListener<ApplicationReadyEven
                                 .build();
 
                 userRepository.save(admin);
+        }
+
+        private void createDefaultStandardUserIfNotExist() {
+                User standardUser = User.builder()
+                                .username("kali")
+                                .email("kali@gmail.com")
+                                .password(passwordEncoder.encode("12345678"))
+                                .role(Role.USER)
+                                .isVerified(true)
+                                .build();
+
+                userRepository.save(standardUser);
         }
 
         private void createDefaultPermissionsIfNotExist(Set<String> permissions) {
