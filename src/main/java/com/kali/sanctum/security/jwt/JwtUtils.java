@@ -3,7 +3,6 @@ package com.kali.sanctum.security.jwt;
 import com.kali.sanctum.enums.Token;
 import com.kali.sanctum.security.user.CustomUserDetails;
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
