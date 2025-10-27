@@ -134,7 +134,6 @@ public class UserController {
             @PathVariable Long userId,
             @Valid @RequestBody UpdateUserRoleRequest updateUserRoleRequest) {
         try {
-            System.out.println("endpoint reached!");
             UserDto updatedUser = userService.updateUserRole(userId, updateUserRoleRequest);
             return ResponseEntity.ok(new ApiResponse("Successfully updated user role", updatedUser));
         } catch (ResourceNotFoundException e) {
@@ -148,7 +147,7 @@ public class UserController {
             @PathVariable Long userId,
             @Valid @RequestBody GrantPermissionRequest grantPermissionRequest) {
         try {
-            grantPermissionRequest.permissions().forEach(permissionName -> userService.grantPermission(userId, permissionName));
+            userService.grantPermission(userId, grantPermissionRequest);
             return ResponseEntity.ok(new ApiResponse("Successfully granted permissions", null));
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(NOT_FOUND).body(new ApiResponse(e.getMessage(), null));
@@ -173,7 +172,7 @@ public class UserController {
     public ResponseEntity<ApiResponse> deleteUser(@PathVariable Long userId) {
         try {
             userService.deleteUser(userId);
-            return ResponseEntity.ok(new ApiResponse("User deleted", null));
+            return ResponseEntity.ok(new ApiResponse("Successfully deleted user", null));
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(NOT_FOUND).body(new ApiResponse(e.getMessage(), null));
         }

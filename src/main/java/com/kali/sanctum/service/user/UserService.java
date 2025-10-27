@@ -1,8 +1,10 @@
 package com.kali.sanctum.service.user;
 
 import com.kali.sanctum.dto.request.CreateUserRequest;
+import com.kali.sanctum.dto.request.GrantPermissionRequest;
 import com.kali.sanctum.dto.request.UpdateUserRequest;
 import com.kali.sanctum.dto.request.UpdateUserRoleRequest;
+import com.kali.sanctum.dto.request.UploadProfileRequest;
 import com.kali.sanctum.dto.response.UserDto;
 import com.kali.sanctum.enums.AuditLogType;
 import com.kali.sanctum.enums.Role;
@@ -14,9 +16,12 @@ import com.kali.sanctum.repository.PermissionRepository;
 import com.kali.sanctum.repository.UserRepository;
 import com.kali.sanctum.service.audit.IAuditLogService;
 import com.kali.sanctum.service.permission.IPermissionService;
+import com.kali.sanctum.service.storage.IStorageService;
+
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +30,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -36,6 +42,7 @@ public class UserService implements IUserService {
     private final PermissionRepository permissionRepository;
     private final IPermissionService permissionService;
     private final IAuditLogService auditLogService;
+    private final IStorageService storageService;
     private final ModelMapper modelMapper;
     private final PasswordEncoder passwordEncoder;
 
@@ -159,25 +166,27 @@ public class UserService implements IUserService {
 
     @Transactional
     @Override
-    public void grantPermission(Long id, String permissionName) {
+    public void grantPermission(Long id, GrantPermissionRequest grantPermissionRequest) {
         User user = getUserEntityById(id);
-
-        Permission permission = permissionRepository.findByName(permissionName)
-                .orElseGet(() -> permissionRepository.save(
-                        Permission.builder().name(permissionName).build()));
+        User actorUser = getAuthenticatedUser();
 
         if (user.getPermissions() == null) {
             user.setPermissions(new HashSet<>());
         }
 
-        user.getPermissions().add(permission);
+        grantPermissionRequest.permissions().forEach(permissionName -> {
+            Permission permission = permissionRepository.findByName(permissionName)
+                    .orElseGet(() -> permissionRepository.save(
+                            Permission.builder().name(permissionName).build()));
 
-        User actorUser = getAuthenticatedUser();
-        auditLogService.logAction(
-                actorUser.getId(),
-                AuditLogType.GRANT_PERMISSION,
-                user.getId(),
-                "Granted permission " + permission.getName() + " to user " + user.getEmail());
+            user.getPermissions().add(permission);
+
+            auditLogService.logAction(
+                    actorUser.getId(),
+                    AuditLogType.GRANT_PERMISSION,
+                    user.getId(),
+                    "Granted permission " + permission.getName() + " to user " + user.getEmail());
+        });
 
         /*
          * Can be omitted because of @Transactional.
@@ -218,8 +227,25 @@ public class UserService implements IUserService {
                             user.getId(),
                             "Deleted user with email: " + user.getEmail());
                 }, () -> {
-                    throw new ResourceNotFoundException("User not found");
+                    throw new ResourceNotFoundException("User not found.");
                 });
+    }
+
+        @Override
+    public String uploadProfile(UploadProfileRequest uploadProfileRequest) throws IOException {
+        User user = getAuthenticatedUser();
+
+        String fileName = "user-" + user.getId() + System.currentTimeMillis() + "-" + uploadProfileRequest.imageFile().getOriginalFilename();
+        
+        //String fileName = storageService.store(uploadProfileRequest.imageFile());
+        
+        return fileName;
+    }
+
+    @Override
+    public Resource loadProfile() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'loadProfile'");
     }
 
     @Override

@@ -30,13 +30,13 @@ public class LocalStorageService implements IStorageService {
     private String uploadDir;
 
     @Override
-    public String store(MultipartFile file, Long userId) throws IOException {
+    public String store(MultipartFile file) throws IOException {
         if (file.isEmpty()) {
-            throw new IllegalArgumentException("File must not be empty");
+            throw new IllegalArgumentException("File must not be empty.");
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found."));
 
         // Sets a unique file name
         String filename = "user-" + userId + "-" + System.currentTimeMillis() + "-" + file.getOriginalFilename();

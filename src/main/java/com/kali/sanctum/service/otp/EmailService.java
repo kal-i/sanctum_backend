@@ -6,7 +6,6 @@ import com.kali.sanctum.exceptions.InvalidOtpException;
 import com.kali.sanctum.exceptions.OtpAlreadySentException;
 import com.kali.sanctum.exceptions.OtpExpiredException;
 import com.kali.sanctum.exceptions.OtpNotFoundException;
-import com.kali.sanctum.exceptions.OtpVerificationException;
 import com.kali.sanctum.exceptions.ResourceNotFoundException;
 import com.kali.sanctum.model.Otp;
 import com.kali.sanctum.model.User;
