@@ -9,6 +9,7 @@ import com.kali.sanctum.dto.response.UserDto;
 import com.kali.sanctum.enums.Role;
 import com.kali.sanctum.model.User;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.springframework.core.io.Resource;
@@ -27,7 +28,7 @@ public interface IUserService {
     void grantPermission(Long id, GrantPermissionRequest grantPermissionRequest);
     void revokePermission(Long userId, Long permissionId);
     void deleteUser(Long id);
-    String uploadProfile(UploadProfileRequest uploadProfileRequest);
+    String uploadProfile(UploadProfileRequest uploadProfileRequest) throws IOException;
     Resource loadProfile();
     List<UserDto> convertToDtos(List<User> users);
     UserDto convertToDto(User user);

@@ -231,21 +231,37 @@ public class UserService implements IUserService {
                 });
     }
 
-        @Override
+    @Override
     public String uploadProfile(UploadProfileRequest uploadProfileRequest) throws IOException {
         User user = getAuthenticatedUser();
 
-        String fileName = "user-" + user.getId() + System.currentTimeMillis() + "-" + uploadProfileRequest.imageFile().getOriginalFilename();
-        
-        //String fileName = storageService.store(uploadProfileRequest.imageFile());
-        
-        return fileName;
+        String filename = "user-" + user.getId() + "-" + System.currentTimeMillis() + "-" + uploadProfileRequest.imageFile().getOriginalFilename();
+        storageService.store(filename, uploadProfileRequest.imageFile());
+
+        user.setProfileImageUrl(filename);
+        userRepository.save(user);
+
+        auditLogService.logAction(
+                user.getId(),
+                AuditLogType.UPDATE_USER,
+                user.getId(),
+                "User profile uploaded " + filename
+        );        
+
+        return filename;
     }
 
     @Override
     public Resource loadProfile() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'loadProfile'");
+        User user = getAuthenticatedUser();
+
+        String imageUrl = user.getProfileImageUrl();
+        if (imageUrl == null || imageUrl.isEmpty()) {
+            throw new ResourceNotFoundException("No profile uploaded.");
+        }
+
+        Resource image = storageService.load(imageUrl);
+        return image;
     }
 
     @Override
