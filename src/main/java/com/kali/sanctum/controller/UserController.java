@@ -4,13 +4,12 @@ import com.kali.sanctum.dto.request.CreateUserRequest;
 import com.kali.sanctum.dto.request.GrantPermissionRequest;
 import com.kali.sanctum.dto.request.UpdateUserRequest;
 import com.kali.sanctum.dto.request.UpdateUserRoleRequest;
+import com.kali.sanctum.dto.request.UploadProfileRequest;
 import com.kali.sanctum.dto.response.ApiResponse;
 import com.kali.sanctum.dto.response.UserDto;
 import com.kali.sanctum.enums.Role;
 import com.kali.sanctum.exceptions.AlreadyExistsException;
 import com.kali.sanctum.exceptions.ResourceNotFoundException;
-import com.kali.sanctum.model.User;
-import com.kali.sanctum.service.storage.IStorageService;
 import com.kali.sanctum.service.user.IUserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +19,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -32,7 +30,6 @@ import static org.springframework.http.HttpStatus.*;
 @RequestMapping("/users")
 public class UserController {
     private final IUserService userService;
-    private final IStorageService storageService;
 
     /*
      * RBAC + PBAC
@@ -178,31 +175,21 @@ public class UserController {
         }
     }
 
-    @PostMapping("/{userId}/upload-profile")
-    public ResponseEntity<ApiResponse> uploadProfile(
-            @PathVariable Long userId,
-            @RequestParam("file") MultipartFile file) {
+    @PostMapping("/upload-profile")
+    public ResponseEntity<ApiResponse> uploadProfile(@Valid UploadProfileRequest uploadProfileRequest) {
         try {
-            String filename = storageService.store(file, userId);
-
-            return ResponseEntity.ok(new ApiResponse("Profile uploaded", filename));
+            String filename = userService.uploadProfile(uploadProfileRequest);
+            return ResponseEntity.ok(new ApiResponse("Successfully uploaded", filename));
         } catch (Exception e) {
             return ResponseEntity.status(INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse("Profile upload failed: " + e.getMessage(), null));
+                    .body(new ApiResponse("Failed to upload profile: " + e.getMessage(), null));
         }
     }
 
-    @GetMapping("/{userId}/load-profile")
-    public ResponseEntity<Resource> loadProfile(@PathVariable Long userId) {
+    @GetMapping("/profile")
+    public ResponseEntity<Resource> loadProfile() {
         try {
-            User user = userService.getUserEntityById(userId);
-
-            String imageUrl = user.getProfileImageUrl();
-            if (imageUrl == null || imageUrl.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-
-            Resource image = storageService.load(imageUrl);
+            Resource image = userService.loadProfile();
 
             // Determine the content type based on file extension (simple way)
             String contentType = Files.probeContentType(Paths.get(image.getFile().getAbsolutePath()));
@@ -210,8 +197,7 @@ public class UserController {
                 contentType = "application/octet-stream";
             }
 
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(contentType))
+            return ResponseEntity.ok().contentType(MediaType.parseMediaType(contentType))
                     .body(image);
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.notFound().build();
