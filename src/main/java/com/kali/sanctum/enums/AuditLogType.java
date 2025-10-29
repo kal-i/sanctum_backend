@@ -16,5 +16,10 @@ public enum AuditLogType {
 
     // Security-related
     RESET_PASSWORD,
-    CHANGE_PASSWORD
+    CHANGE_PASSWORD,
+
+    // Mood-related
+    CREATE_MOOD,
+    UPDATE_MOOD,
+    DELETE_MOOD
 }
