@@ -107,7 +107,7 @@ public class UserService implements IUserService {
                             savedUser.getId(),
                             AuditLogType.CREATE_USER,
                             savedUser.getId(),
-                            "Created User: " + user.getEmail());
+                            "Created User: " + savedUser.getEmail());
 
                     return convertToDto(savedUser);
                 }).orElseThrow(() -> {
