@@ -22,7 +22,7 @@ public class ReflectionPrompt {
     @JoinColumn(name = "mood_id", nullable = false)
     private Mood mood;
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "reflection_id")
+    @OneToOne
+    @JoinColumn(name = "reflection_id", nullable = false, unique = true)
     private Reflection reflection;
 }
