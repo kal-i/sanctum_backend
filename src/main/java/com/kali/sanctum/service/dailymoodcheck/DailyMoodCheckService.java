@@ -11,6 +11,7 @@ import com.kali.sanctum.interfaces.MoodBubble;
 import com.kali.sanctum.model.*;
 import com.kali.sanctum.repository.DailyMoodCheckRepository;
 import com.kali.sanctum.service.aipromptservice.IAiPromptService;
+import com.kali.sanctum.service.audit.IAuditLogService;
 import com.kali.sanctum.service.mood.IMoodService;
 import com.kali.sanctum.service.reflectionprompt.IReflectionPromptService;
 import com.kali.sanctum.service.user.IUserService;
@@ -38,29 +39,29 @@ public class DailyMoodCheckService implements IDailyMoodCheckService {
     private final IReflectionPromptService reflectionPromptService;
     private final IUserService userService;
     private final IAiPromptService aiPromptService;
+    private final IAuditLogService auditLogService;
     private final ModelMapper modelMapper;
 
     @Override
     public DailyMoodCheck getById(Long id) {
         return dailyMoodCheckRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Daily mood check not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Daily mood check not found."));
     }
 
     @Override
-    public Page<DailyMoodCheck> getUserDailyMoodCheck(int page, int size) {
+    public Page<DailyMoodCheckDto> getUserDailyMoodCheck(int page, int size) {
         User user = userService.getAuthenticatedUser();
         Pageable pageable = PageRequest.of(page - 1, size);
-        return dailyMoodCheckRepository.findByUser(user, pageable);
-    }
-
-    @Override
-    public Page<DailyMoodCheckDto> getUserDailyMoodCheckDto(int page, int size) {
-        Page<DailyMoodCheck> pageEntity = getUserDailyMoodCheck(page, size);
+        Page<DailyMoodCheck> pageEntity = dailyMoodCheckRepository.findByUser(user, pageable); 
         return pageEntity.map(this::convertToDto);
     }
 
     @Override
     public String generateContextualPrompt(String mood) {
+        if (!moodService.existsByName(mood)) {
+            throw new ResourceNotFoundException("Mood " + mood + " not found.");
+        }
+
         User user = userService.getAuthenticatedUser();
 
         Instant now = Instant.now();
@@ -124,7 +125,7 @@ public class DailyMoodCheckService implements IDailyMoodCheckService {
             throw new AlreadyExistsException("You already logged your mood today");
         }
 
-        Mood mood = moodService.getMoodById(request.moodId());
+        Mood mood = moodService.getMoodEntityById(request.moodId());
         ReflectionPrompt reflectionPrompt = reflectionPromptService
                 .createPrompt(new CreatePromptRequest(mood.getId(), request.reflectionPrompt()));
 
@@ -159,7 +160,6 @@ public class DailyMoodCheckService implements IDailyMoodCheckService {
     @Override
     public List<CommonTrigger> getCommonDailyMoodTriggers(int limit) {
         User user = userService.getAuthenticatedUser();
-
         return dailyMoodCheckRepository.findCommonDailyMoodTriggersByUser(user.getId(), limit);
     }
 
