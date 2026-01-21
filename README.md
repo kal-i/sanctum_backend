@@ -77,7 +77,7 @@ For example, a user may have permission to update a profile, but service-level v
 ---
 
 ## 🧠 Architecture & Design
-* Spring Boot-based bakend
+* Spring Boot-based backend
 * Service-oriented architecture with clear separation of responsibilities across controllers, services, and infrastructure layers (database, email, AI, storage, and security integrations)
 * Heavy use of interfaces to:
     * Improve testability
