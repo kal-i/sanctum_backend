@@ -27,7 +27,7 @@ public class ReflectionPromptService implements IReflectionPromptService{
 
     @Override
     public ReflectionPrompt createPrompt(CreatePromptRequest request) {
-        Mood mood = moodService.getMoodById(request.moodId());
+        Mood mood = moodService.getMoodEntityById(request.moodId());
 
         ReflectionPrompt reflectionPrompt = ReflectionPrompt.builder()
                 .question(request.question())
