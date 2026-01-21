@@ -17,11 +17,10 @@ public class Reflection {
     @Column(length = 300, nullable = false)
     private String entry;
 
-    @ManyToOne
-    @JoinColumn(name = "reflection_prompt_id", nullable = false)
+    @OneToOne(mappedBy = "reflection", cascade = CascadeType.ALL, orphanRemoval = true)
     private ReflectionPrompt reflectionPrompt;
 
-    @OneToOne
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "daily_mood_check_id", nullable = false)
     private DailyMoodCheck dailyMoodCheck;
 }
