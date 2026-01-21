@@ -19,6 +19,10 @@ public class ReflectionPrompt {
     private String question;
 
     @ManyToOne
-    @JoinColumn(name = "mood_id")
+    @JoinColumn(name = "mood_id", nullable = false)
     private Mood mood;
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "reflection_id")
+    private Reflection reflection;
 }
