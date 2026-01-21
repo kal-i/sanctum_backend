@@ -36,8 +36,8 @@ public class DailyMoodCheckController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "7") int size) {
         try {
-            Page<DailyMoodCheckDto> dailymoodchecks = dailyMoodCheckService.getUserDailyMoodCheckDto(page, size);
-            return ResponseEntity.ok(new ApiResponse("Fetched daily mood checks", dailymoodchecks));
+            Page<DailyMoodCheckDto> dailymoodchecks = dailyMoodCheckService.getUserDailyMoodCheck(page, size);
+            return ResponseEntity.ok(new ApiResponse("Successfully fetched daily mood checks", dailymoodchecks));
         } catch (Exception e) {
             return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(new ApiResponse(e.getMessage(), null));
         }
@@ -47,7 +47,9 @@ public class DailyMoodCheckController {
     public ResponseEntity<ApiResponse> generateReflectionPrompt(@RequestParam String mood) {
         try {
             String prompt = dailyMoodCheckService.generateContextualPrompt(mood);
-            return ResponseEntity.ok().body(new ApiResponse("Fetched prompt", prompt));
+            return ResponseEntity.ok().body(new ApiResponse("Generated reflection prompt", prompt));
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(NOT_FOUND).body(new ApiResponse(e.getMessage(), null));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(new ApiResponse(e.getMessage(), null));
         }
