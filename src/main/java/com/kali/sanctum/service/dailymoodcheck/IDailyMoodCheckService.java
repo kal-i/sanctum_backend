@@ -13,8 +13,7 @@ import org.springframework.data.domain.Page;
 
 public interface IDailyMoodCheckService {
     DailyMoodCheck getById(Long id);
-    Page<DailyMoodCheck> getUserDailyMoodCheck(int page, int size);
-    Page<DailyMoodCheckDto> getUserDailyMoodCheckDto(int page, int size);
+    Page<DailyMoodCheckDto> getUserDailyMoodCheck(int page, int size);
     String generateContextualPrompt(String mood);
     DailyMoodCheck logDailyMoodCheck(LogDailyMoodCheckRequest request);
     List<CommonTrigger> getCommonDailyMoodTriggers(int limit);
